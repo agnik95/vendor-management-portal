@@ -1,0 +1,19 @@
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+html {
+  background: #f4f7fb;
+}
+
+body {
+  min-height: 100vh;
+}

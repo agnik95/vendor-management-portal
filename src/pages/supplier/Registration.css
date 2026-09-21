@@ -1,0 +1,290 @@
+/* Registration Wizard UI - Dark Mode Aesthetic */
+
+.registration-container {
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #F8FAFC;
+    background: transparent;
+    max-width: 1140px;
+    margin: 0 auto;
+}
+
+.wizard-header {
+    margin: 0 auto 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.wizard-header h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+}
+
+.wizard-header .kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #94A3B8;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Dark Mode Card Overrides (Reverted to Image Style) */
+.dark-glass-card {
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0; /* Sharp rectangular corners */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    color: #FFFFFF !important;
+}
+
+.dark-glass-card .card-header {
+    background: #FFFFFF !important;
+    border-bottom: none;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: flex-end; /* Title is removed, badge aligns right */
+    align-items: center;
+    min-height: 56px;
+}
+
+.portal-badge {
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    color: #A78BFA;
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    background: rgba(139, 92, 246, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Inline Stepper UI */
+.wizard-stepper-inline {
+    display: flex;
+    gap: 24px;
+    padding: 16px 24px;
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow-x: auto;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+
+.step-indicator:hover {
+    opacity: 0.8;
+}
+
+.step-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #94A3B8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.step-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #94A3B8;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+/* Active Step */
+.step-indicator.active .step-circle {
+    background: #2563EB;
+    color: #FFFFFF;
+}
+
+.step-indicator.active .step-label {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* Completed Step */
+.step-indicator.completed .step-circle {
+    background: rgba(255, 255, 255, 0.2);
+    color: #E2E8F0;
+}
+
+.step-indicator.completed .step-label {
+    color: #E2E8F0;
+}
+
+/* Form Fields Overrides */
+.registration-container .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.registration-container .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #94A3B8;
+}
+
+.registration-container .form-control {
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 0; /* Sharp rectangular corners */
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #F8FAFC !important;
+    transition: border-color 0.2s ease;
+    color-scheme: dark; /* Ensures native dropdowns use dark mode */
+}
+
+/* Fix for dropdown options to ensure they are visible */
+.registration-container select.form-control option {
+    background: #0f172a;
+    color: #F8FAFC;
+}
+
+.registration-container .form-control:focus {
+    outline: none;
+    border-color: #3B82F6 !important;
+}
+
+.registration-container .form-control:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Footer / Actions */
+.dark-card-footer {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f172a;
+}
+
+.registration-container .btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #94A3B8;
+}
+
+.registration-container .btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.registration-container .btn-primary {
+    background: #2563EB;
+    border: 1px solid #2563EB;
+    color: #FFFFFF;
+}
+
+.registration-container .btn-primary:hover:not(:disabled) {
+    background: #1D4ED8;
+}
+
+/* Data Table Overrides - Reset for dark mode */
+.registration-container .data-table-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.registration-container .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: #F8FAFC !important;
+    background: transparent !important;
+}
+
+.registration-container .data-table th {
+    background: #0f172a !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 12px 16px;
+    color: #94A3B8 !important;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.registration-container .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #F8FAFC !important;
+}
+
+.registration-container .data-table tr:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Content Area */
+.wizard-content-wrapper {
+    max-width: 900px;
+    margin: 0 auto 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.wizard-step-content {
+    animation: fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeSlideIn {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.wizard-step-content.slide-reverse {
+    animation: fadeSlideInReverse 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeSlideInReverse {
+    0% { opacity: 0; transform: translateX(-20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.data-ownership-note {
+    font-size: 11px;
+    color: #64748B;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.data-ownership-note strong {
+    color: #94A3B8;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 4px;
+}
