@@ -23,6 +23,7 @@ export function ToastProvider({ children }) {
         success: (msg, dur) => addToast(msg, 'success', dur),
         warning: (msg, dur) => addToast(msg, 'warning', dur),
         danger: (msg, dur) => addToast(msg, 'danger', dur),
+        error: (title, msg) => addToast(msg ? `${title}: ${msg}` : title, 'danger'),
         info: (msg, dur) => addToast(msg, 'info', dur),
     }
 

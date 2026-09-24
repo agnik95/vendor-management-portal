@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { VendorDataContext } from './useVendorData'
 import { PROTOTYPE_DATA } from '../services/prototypeData'
 import {
+    apiClient,
     approvalService,
     masterDataService,
     buyerSupplierService,
@@ -83,6 +84,69 @@ export function VendorDataProvider({ children }) {
         }
     }, [data])
 
+    useEffect(() => {
+        const fetchBuyerVendors = () => {
+            apiClient.get('/buyer/vendors')
+                .then(vRes => {
+                    const fetchedRegs = vRes.data.items || []
+                    setData(prev => {
+                        const backendRegsFormatted = fetchedRegs.map(r => ({
+                            ref: r.registration_number,
+                            name: r.company_info?.company_name,
+                            days: 1,
+                            cat: r.capability_info?.requested_categories ? r.capability_info.requested_categories.join(', ') : 'Machined parts',
+                            flag: '',
+                            status: r.approval_status,
+                            st: r.approval_status === 'APPROVED' ? 'DONE' : (r.approval_status === 'REJECTED' ? 'REJECTED' : 'OPEN'),
+                            step: r.approval_status === 'APPROVED' ? 4 : 0,
+                            dup: r.tax_info?.is_duplicate_tax || false,
+                            bank: 'PENDING',
+                            pan: r.tax_info?.pan,
+                            gstin: r.tax_info?.gstin,
+                            msme: r.tax_info?.msme_classification,
+                            turnover: r.capability_info?.monthly_capacity || 'Unknown',
+                            emp: 0,
+                            certs: r.capability_info?.quality_certifications ? r.capability_info.quality_certifications.join(', ') : '',
+                            ref2: 'System',
+                            bp: r.sap_bp_id,
+                            checks: [],
+                        }))
+                        
+                        const existingRefs = new Set(backendRegsFormatted.map(r => r.ref))
+                        const mergedRegs = [
+                            ...backendRegsFormatted,
+                            ...(prev.regs || []).filter(r => !existingRefs.has(r.ref))
+                        ]
+
+                        return {
+                            ...prev,
+                            regs: mergedRegs
+                        }
+                    })
+                })
+                .catch(() => { /* Silently handle — backend may be unavailable */ })
+        }
+
+        // Always fetch vendor registrations for the buyer portal view
+        fetchBuyerVendors()
+
+        // If logged in, also fetch the supplier's own profile
+        const token = localStorage.getItem('vendor_portal_token')
+        if (token) {
+            const vendorId = localStorage.getItem('vendor_id')
+            if (vendorId) {
+                apiClient.get(`/buyer/vendors/${vendorId}`)
+                    .then(vRes => {
+                        setData(prev => ({
+                            ...prev,
+                            supplier: vRes.data
+                        }))
+                    })
+                    .catch(() => { /* Silently handle */ })
+            }
+        }
+    }, [])
+
     // --- SUPPLIER ACTIONS ---
     const submitRegistration = useCallback(async (formData) => {
         try {
@@ -122,7 +186,7 @@ export function VendorDataProvider({ children }) {
         if (!target) return { error: 'Registration not found' }
 
         try {
-            await approvalService.advanceStep(ref, target.step, overrideReason)
+            await approvalService.advanceStep(target, target.step, overrideReason)
             setData((prev) => ({
                 ...prev,
                 regs: prev.regs.map((r) => {
@@ -145,25 +209,43 @@ export function VendorDataProvider({ children }) {
     }, [data.regs])
 
     // 2. Final Approval: Create Business Partner (Screen 3)
-    const createBP = useCallback(async (ref, overrideReason = '') => {
+    const createBP = useCallback(async (ref, decision, overrideReason = '') => {
         const target = data.regs.find((r) => r.ref === ref)
         if (!target) return { error: 'Registration not found' }
 
         try {
-            const res = await approvalService.createBusinessPartner(ref, overrideReason)
-            const created = res.data.createdSupplier
+            const res = await approvalService.createBusinessPartner(ref, decision, overrideReason)
+            const bpId = res.data.sap_bp_id
+
+            // Reconstruct the created supplier manually using context data & API response
+            const created = {
+                bp: bpId,
+                name: target.name,
+                cat: target.cat,
+                score: 0,
+                otd: 0,
+                ppm: 0,
+                resp: 0,
+                certs: 100,
+                spend: 0,
+                single: false,
+                asl: 'APPROVED',
+                tooling: 'None',
+                flag: 'PREF',
+            }
+
             setData((prev) => ({
                 ...prev,
-                regs: prev.regs.map((r) => (r.ref === ref ? { ...r, st: 'DONE', bp: created.bp, note: overrideReason || r.note } : r)),
+                regs: prev.regs.map((r) => (r.ref === ref ? { ...r, st: 'DONE', bp: bpId, note: overrideReason || r.note } : r)),
                 sup: [created, ...prev.sup],
                 users: [
-                    { bp: created.bp, sup: created.name, name: 'New administrator', role: 'Administrator', last: 'Never', st: 'ACTIVE' },
+                    { bp: bpId, sup: created.name, name: 'New administrator', role: 'Administrator', last: 'Never', st: 'ACTIVE' },
                     ...prev.users,
                 ],
                 counter: prev.counter + 1,
-                log: [{ t: new Date().toLocaleTimeString('en-GB'), w: `Business Partner ${created.bp} created (deep-insert)`, r: ref }, ...prev.log],
+                log: [{ t: new Date().toLocaleTimeString('en-GB'), w: `Business Partner ${bpId} created (deep-insert)`, r: ref }, ...prev.log],
             }))
-            return { success: true, bp: created.bp }
+            return { success: true, bp: bpId }
         } catch (err) {
             return { error: err.message }
         }

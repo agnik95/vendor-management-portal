@@ -287,23 +287,124 @@ function Registration() {
                                             <th style={{ padding: '8px' }}>Mobile</th>
                                             <th style={{ padding: '8px' }}>Functional Scope</th>
                                             <th style={{ padding: '8px', textAlign: 'center' }}>Primary</th>
+                                            <th style={{ padding: '8px', textAlign: 'center' }}>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {formData.contacts.map((c, idx) => (
                                             <tr key={idx} style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)' }}>
-                                                <td style={{ padding: '8px', fontWeight: 600 }}>{c.name}</td>
-                                                <td style={{ padding: '8px' }}>{c.designation}</td>
-                                                <td style={{ padding: '8px' }}>{c.email}</td>
-                                                <td style={{ padding: '8px' }}>{c.mobile}</td>
-                                                <td style={{ padding: '8px' }}>{c.function}</td>
+                                                <td style={{ padding: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={c.name}
+                                                        onChange={(e) => {
+                                                            const newContacts = [...formData.contacts]
+                                                            newContacts[idx].name = e.target.value
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ padding: '6px 8px', minHeight: 'auto', width: '100%' }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={c.designation}
+                                                        onChange={(e) => {
+                                                            const newContacts = [...formData.contacts]
+                                                            newContacts[idx].designation = e.target.value
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ padding: '6px 8px', minHeight: 'auto', width: '100%' }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '8px' }}>
+                                                    <input
+                                                        type="email"
+                                                        className="form-control"
+                                                        value={c.email}
+                                                        onChange={(e) => {
+                                                            const newContacts = [...formData.contacts]
+                                                            newContacts[idx].email = e.target.value
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ padding: '6px 8px', minHeight: 'auto', width: '100%' }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={c.mobile}
+                                                        onChange={(e) => {
+                                                            const newContacts = [...formData.contacts]
+                                                            newContacts[idx].mobile = e.target.value
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ padding: '6px 8px', minHeight: 'auto', width: '100%' }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={c.function}
+                                                        onChange={(e) => {
+                                                            const newContacts = [...formData.contacts]
+                                                            newContacts[idx].function = e.target.value
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ padding: '6px 8px', minHeight: 'auto', width: '100%' }}
+                                                    />
+                                                </td>
                                                 <td style={{ padding: '8px', textAlign: 'center' }}>
-                                                    <input type="radio" name="primaryContact" defaultChecked={c.primary} />
+                                                    <input 
+                                                        type="radio" 
+                                                        name="primaryContact" 
+                                                        checked={c.primary} 
+                                                        onChange={() => {
+                                                            const newContacts = formData.contacts.map((contact, i) => ({
+                                                                ...contact,
+                                                                primary: i === idx
+                                                            }))
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td style={{ padding: '8px', textAlign: 'center' }}>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newContacts = formData.contacts.filter((_, i) => i !== idx)
+                                                            setFormData({ ...formData, contacts: newContacts })
+                                                        }}
+                                                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '18px', fontWeight: 'bold' }}
+                                                        title="Remove contact"
+                                                    >
+                                                        &times;
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+                                <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-start' }}>
+                                    <Button 
+                                        variant="secondary"
+                                        onClick={() => {
+                                            setFormData({
+                                                ...formData,
+                                                contacts: [
+                                                    ...formData.contacts,
+                                                    { name: '', designation: '', email: '', mobile: '', function: '', primary: false }
+                                                ]
+                                            })
+                                        }}
+                                    >
+                                        + Add a row
+                                    </Button>
+                                </div>
                             </div>
                         )}
 

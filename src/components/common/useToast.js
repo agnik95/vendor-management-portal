@@ -9,6 +9,7 @@ export function useToast() {
             success: (msg) => console.log('[Toast success]', msg),
             warning: (msg) => console.log('[Toast warning]', msg),
             danger: (msg) => console.log('[Toast danger]', msg),
+            error: (title, msg) => console.log('[Toast error]', title, msg),
             info: (msg) => console.log('[Toast info]', msg),
         }
     }

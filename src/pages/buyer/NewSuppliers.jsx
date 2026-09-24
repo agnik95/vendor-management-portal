@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppLayout from '../../components/layout/AppLayout'
+import apiClient from '../../services/apiClient'
 import PageContainer from '../../components/layout/PageContainer'
 import Tabs from '../../components/common/Tabs'
 import DataTable from '../../components/common/DataTable'
@@ -7,6 +8,7 @@ import Button from '../../components/common/Button'
 import StatusBadge from '../../components/common/StatusBadge'
 import { useVendorData } from '../../context/useVendorData'
 import { useToast } from '../../components/common/useToast'
+import { useAuth } from '../../context/AuthContext'
 
 const CHAIN = [
     'Category buyer',
@@ -17,13 +19,50 @@ const CHAIN = [
 
 function NewSuppliers() {
     const toast = useToast()
-    const { data, advanceReg, createBP, rejectReg } = useVendorData()
+    const { data, createBP, rejectReg } = useVendorData()
+    const { hasRole } = useAuth()
+    const canApprove = hasRole('BUYER', 'ADMIN')
 
     const [activeTab, setActiveTab] = useState('open')
     const [selectedRef, setSelectedRef] = useState('REG-2026-187')
     const [justificationNote, setJustificationNote] = useState(
         'Predecessor proprietorship, now converted to an LLP. The old Business Partner stays blocked.'
     )
+    
+    // Master data for Decision panel
+    const [masterData, setMasterData] = useState({
+        purchasingOrgs: [],
+        paymentTerms: [],
+        companyCodes: []
+    })
+
+    const [decision, setDecision] = useState({
+        accountGroup: 'ZVEN - Domestic manufacturing',
+        purchasingOrg: '1010',
+        paymentTerms: 'ZN45',
+        reconciliationAccount: '21100000 - Trade payables',
+        companyCode: 'MSLU'
+    })
+
+    useEffect(() => {
+        const fetchMasterData = async () => {
+            try {
+                const [poRes, ptRes, ccRes] = await Promise.all([
+                    apiClient.get('/buyer/purchasing-org'),
+                    apiClient.get('/buyer/payment-terms'),
+                    apiClient.get('/buyer/company-codes')
+                ])
+                setMasterData({
+                    purchasingOrgs: poRes?.data?.data || [],
+                    paymentTerms: ptRes?.data?.data || [],
+                    companyCodes: ccRes?.data?.data || []
+                })
+            } catch (err) {
+                console.error('Failed to fetch decision master data', err)
+            }
+        }
+        fetchMasterData()
+    }, [])
 
     const openList = (data?.regs || []).filter((r) => r?.st === 'OPEN')
     const approvedList = (data?.regs || []).filter((r) => r?.st === 'DONE')
@@ -48,20 +87,6 @@ function NewSuppliers() {
     const selectedReg =
         (data?.regs || []).find((r) => r?.ref === selectedRef) || currentList[0]
 
-    const handleAdvance = async (ref) => {
-        if (!selectedReg) return
-        if (selectedReg.dup && (!justificationNote || justificationNote.trim().length < 15)) {
-            toast.danger('A duplicate PAN cannot be waved through. You must provide a valid justification (minimum 15 characters).')
-            return
-        }
-        const res = await advanceReg(ref, justificationNote)
-        if (res?.error) {
-            toast.danger(res.error)
-            return
-        }
-        toast.success(`Approved at step ${selectedReg.step + 1}. Passed to ${CHAIN[selectedReg.step + 1]}.`)
-    }
-
     const handleCreateBP = async (ref) => {
         if (!selectedReg) return
         if (selectedReg.bank === 'PENDING') {
@@ -72,7 +97,14 @@ function NewSuppliers() {
             toast.danger('A duplicate PAN cannot be waved through. Justification note is required.')
             return
         }
-        const res = await createBP(ref, justificationNote)
+        
+        const decisionPayload = {
+            company_code: decision.companyCode,
+            purchasing_organization: decision.purchasingOrg,
+            payment_terms: decision.paymentTerms
+        }
+
+        const res = await createBP(ref, decisionPayload, justificationNote)
         if (res?.error) {
             toast.danger(res.error)
             return
@@ -111,12 +143,12 @@ function NewSuppliers() {
         },
         {
             key: 'step',
-            label: 'Approval Step',
+            label: 'Approval Status',
             render: (v, r) =>
                 r?.st === 'OPEN' ? (
                     <div>
-                        <span style={{ fontWeight: 700 }}>Step {v + 1} of 4</span>
-                        <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>{CHAIN[v]}</div>
+                        <span style={{ fontWeight: 700 }}>Pending Review</span>
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Action required</div>
                     </div>
                 ) : (
                     '—'
@@ -154,7 +186,7 @@ function NewSuppliers() {
             <PageContainer
                 kicker="Supplier Onboarding"
                 title="New suppliers"
-                description="Four approval steps with segregation-of-duties controls. Once final approval is granted, one deep-insert call creates the SAP Business Partner."
+                description="Review applications and approve to create the SAP Business Partner."
             >
                 <div className="metric-grid">
                     <article className="metric-card warning">
@@ -227,7 +259,7 @@ function NewSuppliers() {
                             ) : selectedReg?.st === 'REJECTED' ? (
                                 <StatusBadge label="Application Rejected" tone="danger" />
                             ) : (
-                                <StatusBadge label={`Step ${(selectedReg?.step || 0) + 1} of 4: ${CHAIN[selectedReg?.step || 0]}`} tone="warning" />
+                                <StatusBadge label="Pending Approval" tone="warning" />
                             )}
                         </div>
 
@@ -297,42 +329,157 @@ function NewSuppliers() {
                                 </div>
                             )}
 
-                            {/* Actions bar */}
-                            {selectedReg?.st === 'OPEN' && (
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => handleReject(selectedReg.ref)}
-                                    >
-                                        Reject Application
-                                    </Button>
-
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => toast.info('Applicant notified via email with missing details link.')}
-                                    >
-                                        Send Back for Information
-                                    </Button>
-
-                                    <div style={{ flex: 1 }} />
-
-                                    {selectedReg.step < 3 ? (
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => handleAdvance(selectedReg.ref)}
-                                        >
-                                            Approve — Pass to {CHAIN[selectedReg.step + 1]} →
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            variant="primary"
-                                            onClick={() => handleCreateBP(selectedReg.ref)}
-                                        >
-                                            Approve — Create S/4HANA Business Partner ⚡
-                                        </Button>
-                                    )}
+                            {/* Decision Box for Final Step */}
+                            {selectedReg?.st === 'OPEN' && !canApprove && (
+                                <div style={{
+                                    marginTop: '20px',
+                                    padding: '12px 16px',
+                                    background: 'rgba(59, 130, 246, 0.06)',
+                                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                                    borderRadius: '8px',
+                                    fontSize: '12.5px',
+                                    color: 'var(--text-secondary)',
+                                }}>
+                                    <strong>Read-only view.</strong> Approval actions are restricted to Buyer and Admin roles.
                                 </div>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Decision Card (Separate Tile) */}
+                {selectedReg?.st === 'OPEN' && canApprove && (
+                    <div className="card" style={{ marginTop: '22px' }}>
+                        <div className="card-header">
+                            <div>
+                                <span className="card-kicker">Final Step</span>
+                                <h3 className="card-title">Decision</h3>
+                            </div>
+                        </div>
+                        <div className="card-body">
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Account Group</label>
+                                    <select 
+                                        className="form-control"
+                                        value={decision.accountGroup}
+                                        onChange={(e) => setDecision({...decision, accountGroup: e.target.value})}
+                                        style={{ fontWeight: '600' }}
+                                    >
+                                        <option value="ZVEN - Domestic manufacturing">ZVEN — Domestic manufacturing</option>
+                                        <option value="ZIMP - Import manufacturing">ZIMP — Import manufacturing</option>
+                                        <option value="ZSER - Service provider">ZSER — Service provider</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Purchasing Organisation</label>
+                                    <select 
+                                        className="form-control"
+                                        value={decision.purchasingOrg}
+                                        onChange={(e) => setDecision({...decision, purchasingOrg: e.target.value})}
+                                        style={{ fontWeight: '600' }}
+                                    >
+                                        {masterData.purchasingOrgs.length === 0 && <option value="1010">1010 — Domestic</option>}
+                                        {masterData.purchasingOrgs.map(org => (
+                                            <option key={org.purchasing_organization} value={org.purchasing_organization}>
+                                                {org.purchasing_organization} — {org.purchasing_organization_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Payment Terms</label>
+                                    <select 
+                                        className="form-control"
+                                        value={decision.paymentTerms}
+                                        onChange={(e) => setDecision({...decision, paymentTerms: e.target.value})}
+                                        style={{ fontWeight: '600' }}
+                                    >
+                                        {masterData.paymentTerms.length === 0 && <option value="ZN45">ZN45 — 45 days net</option>}
+                                        {masterData.paymentTerms.map(term => (
+                                            <option key={term.payment_term} value={term.payment_term}>
+                                                {term.payment_term} — {term.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Reconciliation Account</label>
+                                    <select 
+                                        className="form-control"
+                                        value={decision.reconciliationAccount}
+                                        onChange={(e) => setDecision({...decision, reconciliationAccount: e.target.value})}
+                                        style={{ fontWeight: '600' }}
+                                    >
+                                        <option value="21100000 - Trade payables">21100000 — Trade payables</option>
+                                        <option value="21100001 - Import payables">21100001 — Import payables</option>
+                                    </select>
+                                </div>
+                                
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                    <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Company Code</label>
+                                    <select 
+                                        className="form-control"
+                                        value={decision.companyCode}
+                                        onChange={(e) => setDecision({...decision, companyCode: e.target.value})}
+                                        style={{ fontWeight: '600' }}
+                                    >
+                                        {masterData.companyCodes.length === 0 && <option value="MSLU">MSLU — MAHARASHTRA SEAMLESS LTD</option>}
+                                        {masterData.companyCodes.map(code => (
+                                            <option key={code.company_code} value={code.company_code}>
+                                                {code.company_code} — {code.company_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {!selectedReg?.dup && (
+                                    <div style={{ gridColumn: '1 / -1' }}>
+                                        <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>Note to the next approver</label>
+                                        <textarea
+                                            className="form-textarea"
+                                            rows={3}
+                                            value={justificationNote}
+                                            onChange={(e) => setJustificationNote(e.target.value)}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Integrated Actions bar */}
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '12px', 
+                            alignItems: 'center', 
+                            padding: '16px 20px', 
+                            borderTop: '1px solid var(--border)',
+                            background: 'rgba(0,0,0,0.02)',
+                            borderBottomLeftRadius: '8px',
+                            borderBottomRightRadius: '8px'
+                        }}>
+                            <Button
+                                variant="danger"
+                                onClick={() => handleReject(selectedReg.ref)}
+                            >
+                                Reject
+                            </Button>
+
+                            <Button
+                                variant="secondary"
+                                onClick={() => toast.info('Applicant notified via email with missing details link.')}
+                            >
+                                Send back for information
+                            </Button>
+
+                            <div style={{ flex: 1 }} />
+
+                            <Button
+                                variant="primary"
+                                onClick={() => handleCreateBP(selectedReg.ref)}
+                            >
+                                Approve — Create Business Partner
+                            </Button>
                         </div>
                     </div>
                 )}

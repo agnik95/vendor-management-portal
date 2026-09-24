@@ -136,7 +136,7 @@ class RegistrationService {
         console.log('🚀 Sending PostgreSQL Payload to Backend:', JSON.stringify(backendPayload, null, 2))
 
         return apiClient.post(
-            '/portal/supplier/registration',
+            '/vendor/register',
             backendPayload,
             () => uiPayload,
             {

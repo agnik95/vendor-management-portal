@@ -9,6 +9,7 @@ import StatusBadge from '../../components/common/StatusBadge'
 import Modal from '../../components/common/Modal'
 import FormField from '../../components/common/FormField'
 import { useToast } from '../../context/useToast'
+import { useVendorData } from '../../context/useVendorData'
 
 function CompanyProfile() {
     const toast = useToast()
@@ -22,8 +23,22 @@ function CompanyProfile() {
     const [changeReason, setChangeReason] = useState('')
     const [newDetail, setNewDetail] = useState('')
 
-    // Mock company data
-    const generalData = {
+    const { data } = useVendorData()
+    const supplier = data?.supplier || {}
+    const isRealData = !!supplier.company_info
+
+    // Mock company data fallback
+    const generalData = isRealData ? {
+        bp: supplier.sap_bp_id || 'Pending',
+        name: supplier.company_info.company_name,
+        group: supplier.sap_defaults?.bp_grouping || 'SUPP — Domestic Standard Vendors',
+        country: supplier.company_info.country,
+        pan: supplier.tax_info?.pan,
+        gstin: supplier.tax_info?.gstin,
+        msme: supplier.tax_info?.msme_classification || 'Not Provided',
+        blocked: supplier.status !== 'ACTIVE' && supplier.status !== 'SUBMITTED',
+        status: supplier.approval_status || 'Submitted',
+    } : {
         bp: '0017004521',
         name: 'Precision Components Pvt Ltd',
         group: 'SUPP — Domestic Standard Vendors',
@@ -35,7 +50,13 @@ function CompanyProfile() {
         status: 'Active since 12 Mar 2021',
     }
 
-    const addresses = [
+    const addresses = isRealData ? [
+        {
+            type: 'Registered office',
+            address: supplier.company_info.country || 'India',
+            purpose: 'Statutory correspondence & legal notices',
+        }
+    ] : [
         {
             type: 'Registered office',
             address: '#118, SIDCO Industrial Estate, Hosur Road, Bengaluru 560068',
@@ -53,7 +74,12 @@ function CompanyProfile() {
         },
     ]
 
-    const contacts = [
+    const contacts = isRealData ? (supplier.contacts || []).map(c => ({
+        name: c.contact_name,
+        title: c.designation,
+        email: c.email,
+        scope: c.function || 'General',
+    })) : [
         {
             name: 'A. Deshpande',
             title: 'Managing Director & CEO',
@@ -73,6 +99,16 @@ function CompanyProfile() {
             scope: 'Invoicing, GST Returns & Banking',
         },
     ]
+
+    const bankingData = isRealData ? {
+        bank: supplier.bank_info?.bank_country || 'Not Provided',
+        account: supplier.bank_info?.account_number ? '••••' + supplier.bank_info.account_number.slice(-4) : 'Not Provided',
+        ifsc: supplier.bank_info?.ifsc_code || 'Not Provided',
+    } : {
+        bank: 'HDFC Bank, Peenya Branch',
+        account: '••••••4471',
+        ifsc: 'HDFC0001234',
+    }
 
     const [changeRequests, setChangeRequests] = useState([
         {
@@ -284,14 +320,14 @@ function CompanyProfile() {
                                         <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                                             Banking Institution
                                         </span>
-                                        <div style={{ fontWeight: 600, marginTop: '2px' }}>HDFC Bank, Peenya Branch</div>
+                                        <div style={{ fontWeight: 600, marginTop: '2px' }}>{bankingData.bank}</div>
                                     </div>
                                     <div>
                                         <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                                             Disbursement Account Number
                                         </span>
                                         <div className="font-mono" style={{ fontWeight: 600, marginTop: '2px' }}>
-                                            ••••••4471
+                                            {bankingData.account}
                                         </div>
                                     </div>
                                     <div>
@@ -299,7 +335,7 @@ function CompanyProfile() {
                                             IFSC Routing Code
                                         </span>
                                         <div className="font-mono" style={{ fontWeight: 600, marginTop: '2px' }}>
-                                            HDFC0001234
+                                            {bankingData.ifsc}
                                         </div>
                                     </div>
                                     <div>

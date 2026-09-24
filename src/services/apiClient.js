@@ -31,6 +31,32 @@ class ApiClient {
         this.useMock = USE_MOCK
     }
 
+    _getHeaders(optionsHeaders = {}) {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            ...optionsHeaders,
+        }
+        const token = localStorage.getItem('vendor_portal_token')
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`
+        }
+        return headers
+    }
+
+    _handleResponse(response) {
+        if (response.status === 401) {
+            localStorage.removeItem('vendor_portal_token')
+            localStorage.removeItem('vendor_portal_user')
+            window.location.href = '/login'
+        }
+        if (response.status === 403) {
+            // Surface the backend's access-denied message
+            // The caller will catch this as an error via !response.ok check
+            console.warn('Access denied (403): User does not have permission for this action')
+        }
+    }
+
     /**
      * Standard GET request
      */
@@ -48,12 +74,10 @@ class ApiClient {
         const url = `${this.baseUrl}${endpoint}`
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
+            headers: this._getHeaders(options.headers),
         })
+
+        this._handleResponse(response)
 
         if (!response.ok) {
             throw new Error(`HTTP Error ${response.status}: ${response.statusText}`)
@@ -72,7 +96,7 @@ class ApiClient {
     async post(endpoint, payload, mockResponseResolver, options = {}) {
         const idempotencyKey = options.idempotencyKey || generateIdempotencyKey('POST', endpoint.replace(/\W/g, '_'))
 
-        if (this.useMock) {
+        if (this.useMock || options.forceMock) {
             await delay(options.delay ?? (DEFAULT_DELAY_MS + 200))
             const result = typeof mockResponseResolver === 'function'
                 ? mockResponseResolver(payload)
@@ -91,16 +115,16 @@ class ApiClient {
         }
 
         const url = `${this.baseUrl}${endpoint}`
+        const headers = this._getHeaders(options.headers)
+        headers['X-Idempotency-Key'] = idempotencyKey
+
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-Idempotency-Key': idempotencyKey,
-                ...options.headers,
-            },
+            headers: headers,
             body: JSON.stringify(payload),
         })
+
+        this._handleResponse(response)
 
         if (!response.ok) {
             const errorBody = await response.text().catch(() => '')
@@ -119,7 +143,7 @@ class ApiClient {
      * Standard PATCH request (with ETag concurrency check)
      */
     async patch(endpoint, payload, mockResponseResolver, options = {}) {
-        if (this.useMock) {
+        if (this.useMock || options.forceMock) {
             await delay(options.delay ?? DEFAULT_DELAY_MS)
             const result = typeof mockResponseResolver === 'function'
                 ? mockResponseResolver(payload)
@@ -133,16 +157,16 @@ class ApiClient {
         }
 
         const url = `${this.baseUrl}${endpoint}`
+        const headers = this._getHeaders(options.headers)
+        headers['If-Match'] = options.etag || '*'
+
         const response = await fetch(url, {
             method: 'PATCH',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'If-Match': options.etag || '*',
-                ...options.headers,
-            },
+            headers: headers,
             body: JSON.stringify(payload),
         })
+
+        this._handleResponse(response)
 
         if (!response.ok) {
             throw new Error(`PATCH ${endpoint} failed (${response.status}): ${response.statusText}`)

@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
 import './LandingPage.css'
 
 function LandingPage() {
     const navigate = useNavigate()
+    const { user, isAuthenticated, logout } = useAuth()
     const [mousePos, setMousePos] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
 
     useEffect(() => {
@@ -13,6 +15,22 @@ function LandingPage() {
         window.addEventListener('mousemove', handleMouseMove)
         return () => window.removeEventListener('mousemove', handleMouseMove)
     }, [])
+
+    const handleBuyerClick = () => {
+        if (isAuthenticated && user?.role === 'VENDOR') {
+            logout()
+        } else {
+            navigate('/buyer/login')
+        }
+    }
+
+    const handleSupplierClick = () => {
+        if (isAuthenticated && (user?.role === 'BUYER' || user?.role === 'ADMIN')) {
+            logout()
+        } else {
+            navigate('/supplier/login')
+        }
+    }
 
     return (
         <div className="landing-root">
@@ -67,7 +85,7 @@ function LandingPage() {
                     <button 
                         className="portal-card blue-card fade-in-up" 
                         style={{ animationDelay: '0.4s' }}
-                        onClick={() => navigate('/buyer')}
+                        onClick={handleBuyerClick}
                     >
                         <div className="card-top">
                             <div className="card-icon">
@@ -86,7 +104,7 @@ function LandingPage() {
                     <button 
                         className="portal-card purple-card fade-in-up" 
                         style={{ animationDelay: '0.5s' }}
-                        onClick={() => navigate('/supplier')}
+                        onClick={handleSupplierClick}
                     >
                         <div className="card-top">
                             <div className="card-icon">
@@ -101,28 +119,6 @@ function LandingPage() {
                         <div className="card-pill">SELF-SERVICE</div>
                         <h3>Supplier Portal</h3>
                         <p>Orders, shipment notices, invoices, payments and quality responses — what you need to do, in one place.</p>
-                    </button>
-
-                    {/* Registration Card */}
-                    <button 
-                        className="portal-card green-card fade-in-up" 
-                        style={{ animationDelay: '0.6s' }}
-                        onClick={() => navigate('/register')}
-                    >
-                        <div className="card-top">
-                            <div className="card-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                    <circle cx="8.5" cy="7" r="4"></circle>
-                                    <line x1="20" y1="8" x2="20" y2="14"></line>
-                                    <line x1="23" y1="11" x2="17" y2="11"></line>
-                                </svg>
-                            </div>
-                            <div className="card-arrow">↗</div>
-                        </div>
-                        <div className="card-pill">ONBOARDING</div>
-                        <h3>New Supplier Registration</h3>
-                        <p>Six sections, live GSTIN validation and duplicate screening. Nothing reaches the ERP until approval.</p>
                     </button>
                 </div>
             </main>
