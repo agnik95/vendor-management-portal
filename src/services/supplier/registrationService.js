@@ -100,7 +100,8 @@ class RegistrationService {
                 bp_grouping: 'ZDOM',
                 bp_category: '1',
                 language: 'EN',
-                search_term: formData.name ? formData.name.substring(0, 10).toUpperCase() : 'LAKSHMI'
+                search_term: formData.name ? formData.name.substring(0, 10).toUpperCase() : 'LAKSHMI',
+                currency: formData.currency || 'INR'
             },
             contacts: formData.contacts && formData.contacts.length > 0 ? formData.contacts.map(c => ({
                 contact_name: c.name,

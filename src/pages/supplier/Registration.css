@@ -1,10 +1,10 @@
-/* Registration Wizard UI - Dark Mode Aesthetic */
+/* Registration Wizard UI - Premium Dark Mode */
 
 .registration-container {
     min-height: 100vh;
     padding: 40px 20px;
     font-family: 'Inter', system-ui, sans-serif;
-    color: #F8FAFC;
+    color: #E2E8F0;
     background: transparent;
     max-width: 1140px;
     margin: 0 auto;
@@ -37,47 +37,50 @@
     gap: 8px;
 }
 
-/* Dark Mode Card Overrides (Reverted to Image Style) */
+/* ─── Main Card ─── */
 .dark-glass-card {
-    background: #0f172a !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 0; /* Sharp rectangular corners */
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 20, 35, 0.85) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 40px rgba(0, 0, 0, 0.25);
     overflow: hidden;
-    color: #FFFFFF !important;
+    color: #E2E8F0 !important;
 }
 
 .dark-glass-card .card-header {
-    background: #FFFFFF !important;
-    border-bottom: none;
-    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 12px 28px;
     display: flex;
-    justify-content: flex-end; /* Title is removed, badge aligns right */
+    justify-content: flex-end;
     align-items: center;
-    min-height: 56px;
+    min-height: 48px;
 }
 
 .portal-badge {
-    border: 1px solid rgba(139, 92, 246, 0.5);
-    color: #A78BFA;
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #C4B5FD;
     font-size: 10px;
     text-transform: uppercase;
-    padding: 4px 8px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
-    background: rgba(139, 92, 246, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.8px;
+    background: rgba(139, 92, 246, 0.08);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    font-weight: 600;
 }
 
-/* Inline Stepper UI */
+/* ─── Stepper ─── */
 .wizard-stepper-inline {
     display: flex;
-    gap: 24px;
-    padding: 16px 24px;
-    background: #0f172a;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    gap: 8px;
+    padding: 14px 28px;
+    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     overflow-x: auto;
 }
 
@@ -87,130 +90,181 @@
     gap: 8px;
     cursor: pointer;
     user-select: none;
-    transition: opacity 0.2s ease;
+    padding: 6px 14px;
+    border-radius: 8px;
+    transition: all 0.25s ease;
 }
 
 .step-indicator:hover {
-    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .step-circle {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: #94A3B8;
+    background: rgba(255, 255, 255, 0.06);
+    color: #64748B;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s ease;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
 }
 
 .step-label {
     font-size: 13px;
     font-weight: 500;
-    color: #94A3B8;
+    color: #64748B;
     transition: color 0.3s ease;
     white-space: nowrap;
 }
 
 /* Active Step */
+.step-indicator.active {
+    background: rgba(139, 92, 246, 0.08);
+}
+
 .step-indicator.active .step-circle {
-    background: #2563EB;
+    background: #8B5CF6;
+    border-color: #8B5CF6;
     color: #FFFFFF;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
 }
 
 .step-indicator.active .step-label {
-    color: #FFFFFF;
+    color: #E2E8F0;
     font-weight: 600;
 }
 
 /* Completed Step */
 .step-indicator.completed .step-circle {
-    background: rgba(255, 255, 255, 0.2);
-    color: #E2E8F0;
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34D399;
 }
 
 .step-indicator.completed .step-label {
-    color: #E2E8F0;
-}
-
-/* Form Fields Overrides */
-.registration-container .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
-}
-
-.registration-container .form-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     color: #94A3B8;
 }
 
-.registration-container .form-control {
-    background: transparent !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 0; /* Sharp rectangular corners */
-    padding: 10px 12px;
-    font-size: 14px;
-    color: #F8FAFC !important;
-    transition: border-color 0.2s ease;
-    color-scheme: dark; /* Ensures native dropdowns use dark mode */
+/* ─── Form Fields — Open Layout (no boxes) ─── */
+.registration-container .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0;
+    /* Remove any box/card styling */
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
 }
 
-/* Fix for dropdown options to ensure they are visible */
+.registration-container .form-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #94A3B8;
+    margin-bottom: 6px;
+}
+
+.registration-container .form-label-required {
+    color: #F472B6;
+    margin-left: 3px;
+}
+
+.registration-container .form-control {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: none !important;
+    border-bottom: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0 !important;
+    padding: 10px 4px;
+    font-size: 14px;
+    color: #F1F5F9 !important;
+    transition: border-color 0.25s ease, background 0.25s ease;
+    color-scheme: dark;
+    font-weight: 500;
+}
+
 .registration-container select.form-control option {
-    background: #0f172a;
-    color: #F8FAFC;
+    background: #1e1b3a;
+    color: #F1F5F9;
 }
 
 .registration-container .form-control:focus {
     outline: none;
-    border-color: #3B82F6 !important;
+    border-bottom-color: #A78BFA !important;
+    background: rgba(139, 92, 246, 0.04) !important;
 }
 
 .registration-container .form-control:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-/* Footer / Actions */
+.registration-container .form-hint,
+.registration-container .form-error {
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.registration-container .form-hint {
+    color: #64748B;
+}
+
+.registration-container .form-error {
+    color: #FB7185;
+}
+
+/* ─── Footer ─── */
 .dark-card-footer {
-    padding: 16px 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px 28px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #0f172a;
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .registration-container .btn-secondary {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #94A3B8;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .registration-container .btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #E2E8F0;
 }
 
 .registration-container .btn-primary {
-    background: #2563EB;
-    border: 1px solid #2563EB;
+    background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    border: none;
     color: #FFFFFF;
+    border-radius: 8px;
+    padding: 8px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
 }
 
 .registration-container .btn-primary:hover:not(:disabled) {
-    background: #1D4ED8;
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45);
+    transform: translateY(-1px);
 }
 
-/* Data Table Overrides - Reset for dark mode */
+/* ─── Data Table ─── */
 .registration-container .data-table-container {
     background: transparent !important;
     border: none !important;
@@ -222,32 +276,32 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
-    color: #F8FAFC !important;
+    color: #E2E8F0 !important;
     background: transparent !important;
 }
 
 .registration-container .data-table th {
-    background: #0f172a !important;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     padding: 12px 16px;
-    color: #94A3B8 !important;
+    color: #64748B !important;
     text-transform: uppercase;
     font-size: 10px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     font-weight: 600;
 }
 
 .registration-container .data-table td {
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    color: #F8FAFC !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    color: #E2E8F0 !important;
 }
 
 .registration-container .data-table tr:hover {
-    background: rgba(255, 255, 255, 0.04) !important;
+    background: rgba(139, 92, 246, 0.04) !important;
 }
 
-/* Content Area */
+/* ─── Content Area ─── */
 .wizard-content-wrapper {
     max-width: 900px;
     margin: 0 auto 24px;
@@ -256,20 +310,20 @@
 }
 
 .wizard-step-content {
-    animation: fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeSlideIn {
-    0% { opacity: 0; transform: translateX(20px); }
+    0% { opacity: 0; transform: translateX(16px); }
     100% { opacity: 1; transform: translateX(0); }
 }
 
 .wizard-step-content.slide-reverse {
-    animation: fadeSlideInReverse 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: fadeSlideInReverse 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeSlideInReverse {
-    0% { opacity: 0; transform: translateX(-20px); }
+    0% { opacity: 0; transform: translateX(-16px); }
     100% { opacity: 1; transform: translateX(0); }
 }
 
@@ -287,4 +341,35 @@
     letter-spacing: 0.5px;
     display: block;
     margin-bottom: 4px;
+}
+
+/* ─── Contacts Table Inline Inputs ─── */
+.registration-container table .form-control {
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 6px 4px;
+    font-size: 13px;
+    min-height: auto;
+}
+
+.registration-container table .form-control:focus {
+    border-bottom-color: #A78BFA !important;
+}
+
+/* ─── Inline table header styling ─── */
+.registration-container table thead tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.registration-container table thead th {
+    color: #64748B;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+}
+
+.registration-container table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
 }

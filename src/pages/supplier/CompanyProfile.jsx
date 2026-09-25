@@ -107,7 +107,7 @@ function CompanyProfile() {
     } : {
         bank: 'HDFC Bank, Peenya Branch',
         account: '••••••4471',
-        ifsc: 'HDFC0001234',
+        ifsc: 'ICIC0000021',
     }
 
     const [changeRequests, setChangeRequests] = useState([
@@ -115,7 +115,7 @@ function CompanyProfile() {
             type: 'Bank account update',
             when: '14 May 2026',
             status: 'POSTED',
-            detail: 'Changed IFSC to HDFC0001234 · Dual approved & penny-drop verified',
+            detail: 'Changed IFSC to ICIC0000021 · Dual approved & penny-drop verified',
         },
         {
             type: 'Dispatch address addition',

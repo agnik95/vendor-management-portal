@@ -33,13 +33,14 @@ function NewSuppliers() {
     const [masterData, setMasterData] = useState({
         purchasingOrgs: [],
         paymentTerms: [],
-        companyCodes: []
+        companyCodes: [],
+        accountGroups: []
     })
 
     const [decision, setDecision] = useState({
-        accountGroup: 'ZVEN - Domestic manufacturing',
-        purchasingOrg: '1010',
-        paymentTerms: 'ZN45',
+        accountGroup: 'ZDOM',
+        purchasingOrg: 'MSPO',
+        paymentTerms: 'A200',
         reconciliationAccount: '21100000 - Trade payables',
         companyCode: 'MSLU'
     })
@@ -47,15 +48,17 @@ function NewSuppliers() {
     useEffect(() => {
         const fetchMasterData = async () => {
             try {
-                const [poRes, ptRes, ccRes] = await Promise.all([
+                const [poRes, ptRes, ccRes, agRes] = await Promise.all([
                     apiClient.get('/buyer/purchasing-org'),
                     apiClient.get('/buyer/payment-terms'),
-                    apiClient.get('/buyer/company-codes')
+                    apiClient.get('/buyer/company-codes'),
+                    apiClient.get('/buyer/supplier-account-groups')
                 ])
                 setMasterData({
                     purchasingOrgs: poRes?.data?.data || [],
                     paymentTerms: ptRes?.data?.data || [],
-                    companyCodes: ccRes?.data?.data || []
+                    companyCodes: ccRes?.data?.data || [],
+                    accountGroups: agRes?.data?.data || []
                 })
             } catch (err) {
                 console.error('Failed to fetch decision master data', err)
@@ -89,10 +92,8 @@ function NewSuppliers() {
 
     const handleCreateBP = async (ref) => {
         if (!selectedReg) return
-        if (selectedReg.bank === 'PENDING') {
-            toast.warning('Bank verification not finished. It blocks final Business Partner creation.')
-            return
-        }
+        // Bank verification block removed to allow final Business Partner creation
+
         if (selectedReg.dup && (!justificationNote || justificationNote.trim().length < 15)) {
             toast.danger('A duplicate PAN cannot be waved through. Justification note is required.')
             return
@@ -101,7 +102,8 @@ function NewSuppliers() {
         const decisionPayload = {
             company_code: decision.companyCode,
             purchasing_organization: decision.purchasingOrg,
-            payment_terms: decision.paymentTerms
+            payment_terms: decision.paymentTerms,
+            supplier_account_group: decision.accountGroup
         }
 
         const res = await createBP(ref, decisionPayload, justificationNote)
@@ -366,9 +368,12 @@ function NewSuppliers() {
                                         onChange={(e) => setDecision({...decision, accountGroup: e.target.value})}
                                         style={{ fontWeight: '600' }}
                                     >
-                                        <option value="ZVEN - Domestic manufacturing">ZVEN — Domestic manufacturing</option>
-                                        <option value="ZIMP - Import manufacturing">ZIMP — Import manufacturing</option>
-                                        <option value="ZSER - Service provider">ZSER — Service provider</option>
+                                        {masterData.accountGroups.length === 0 && <option value="CPD">CPD — Dummy Account Group</option>}
+                                        {masterData.accountGroups.map(group => (
+                                            <option key={group.supplier_account_group} value={group.supplier_account_group}>
+                                                {group.supplier_account_group} — {group.account_group_name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>

@@ -328,7 +328,7 @@ function NewSupplierModal({ isOpen, onClose }) {
                                 type="text"
                                 maxLength={11}
                                 className="form-input"
-                                placeholder="e.g. HDFC0001234"
+                                placeholder="e.g. ICIC0000021"
                                 style={{ textTransform: 'uppercase', fontFamily: 'monospace' }}
                                 value={formData.ifsc}
                                 onChange={(e) => handleChange('ifsc', e.target.value)}

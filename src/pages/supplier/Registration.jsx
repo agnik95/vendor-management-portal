@@ -87,9 +87,10 @@ function Registration() {
         accHolder: 'Hosur Turned Parts LLP',
         accNo: '••••••4471',
         accNoConfirm: '••••••4471',
-        ifsc: 'HDFC0001234',
+        ifsc: 'ICIC0000021',
         branch: 'HDFC Bank, Hosur',
         accType: 'Current',
+        currency: 'INR',
 
         // 4. Capability
         categories: 'Machined parts, Turned components',
@@ -216,14 +217,14 @@ function Registration() {
                         })}
                     </div>
 
-                    <div style={{ padding: '32px 0' }}>
+                    <div style={{ padding: '32px 28px' }}>
                         <div 
                             key={currentStep} // Forces re-render for animation on step change
                             className={`wizard-step-content ${slideDirection === 'backward' ? 'slide-reverse' : ''}`}
                         >
                         {/* 0. COMPANY */}
                         {currentStep === 0 && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px 40px' }}>
                                 <FormField label="Legal entity name" required>
                                     <input
                                         type="text"
@@ -411,7 +412,7 @@ function Registration() {
                         {/* 2. TAX & COMPLIANCE */}
                         {currentStep === 2 && (
                             <div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px 40px' }}>
                                     <FormField label="Country of registration">
                                         <input type="text" className="form-control" value="India" readOnly disabled />
                                     </FormField>
@@ -486,7 +487,7 @@ function Registration() {
                                     style={{
                                         display: 'grid',
                                         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                                        gap: '16px',
+                                        gap: '28px 40px',
                                         marginTop: '20px',
                                     }}
                                 >
@@ -542,7 +543,7 @@ function Registration() {
                         {/* 3. BANKING */}
                         {currentStep === 3 && (
                             <div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px 40px' }}>
                                     <FormField label="Account holder name" required helper="Must strictly match legal entity name">
                                         <input
                                             type="text"
@@ -594,6 +595,19 @@ function Registration() {
                                             <option>Overdraft</option>
                                         </select>
                                     </FormField>
+
+                                    <FormField label="Order currency">
+                                        <select
+                                            className="form-control"
+                                            value={formData.currency}
+                                            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                                        >
+                                            <option value="INR">INR — Indian Rupee</option>
+                                            <option value="USD">USD — US Dollar</option>
+                                            <option value="EUR">EUR — Euro</option>
+                                            <option value="GBP">GBP — British Pound</option>
+                                        </select>
+                                    </FormField>
                                 </div>
 
                                 <div
@@ -617,7 +631,7 @@ function Registration() {
 
                         {/* 4. CAPABILITY */}
                         {currentStep === 4 && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px 40px' }}>
                                 <FormField label="Requested supply categories" required>
                                     <input
                                         type="text"
