@@ -112,11 +112,7 @@ export function VendorDataProvider({ children }) {
                             checks: [],
                         }))
                         
-                        const existingRefs = new Set(backendRegsFormatted.map(r => r.ref))
-                        const mergedRegs = [
-                            ...backendRegsFormatted,
-                            ...(prev.regs || []).filter(r => !existingRefs.has(r.ref))
-                        ]
+                        const mergedRegs = backendRegsFormatted
 
                         return {
                             ...prev,

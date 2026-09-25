@@ -246,7 +246,6 @@ function BuyerHome() {
                                             type="button"
                                             onClick={() => setQueueFilter(tab.id)}
                                             style={{
-                                                border: 'none',
                                                 padding: '5px 10px',
                                                 borderRadius: '6px',
                                                 fontSize: '11.5px',

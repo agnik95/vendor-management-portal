@@ -128,7 +128,27 @@ class ApiClient {
 
         if (!response.ok) {
             const errorBody = await response.text().catch(() => '')
-            throw new Error(`POST ${endpoint} failed (${response.status}): ${errorBody || response.statusText}`)
+            // Try to extract a meaningful message from the backend's JSON error
+            let errorMessage = `POST ${endpoint} failed (${response.status})`
+            try {
+                const parsed = JSON.parse(errorBody)
+                const detail = parsed?.detail || ''
+                // Backend wraps SAP errors like: "Approval & SAP Sync Failed: SAP Error [400]: {JSON}"
+                const sapJsonMatch = detail.match(/SAP Error \[\d+\]: (.+)$/)
+                if (sapJsonMatch) {
+                    try {
+                        const sapError = JSON.parse(sapJsonMatch[1])
+                        errorMessage = sapError?.error?.message?.value || detail
+                    } catch {
+                        errorMessage = detail
+                    }
+                } else if (detail) {
+                    errorMessage = detail
+                }
+            } catch {
+                if (errorBody) errorMessage += `: ${errorBody}`
+            }
+            throw new Error(errorMessage)
         }
 
         return {
