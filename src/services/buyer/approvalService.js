@@ -49,20 +49,21 @@ class ApprovalService {
 
     async createBusinessPartner(ref, decision, overrideReason = '') {
         // We rely on the backend for validation now.
-        const newBP = `001700${Math.floor(4700 + Math.random() * 299)}`
+        const payload = {
+            decision: {
+                company_code: decision.companyCode,
+                purchasing_organization: decision.purchasingOrg,
+                payment_terms: decision.paymentTerms,
+                supplier_account_group: decision.accountGroup,
+            }
+        }
 
         return apiClient.post(
             `/buyer/vendors/${ref}/approve`,
-            { decision },
-            () => ({
-                status: "Approved",
-                registration_number: ref,
-                sap_bp_id: newBP,
-                message: "Vendor approved and created in SAP S/4HANA successfully.",
-            }),
+            payload,
+            null, // No mock responder, make the real API call!
             {
-                idempotencyKey: generateIdempotencyKey('BP_CREATE', newBP),
-                sapMessage: `Business Partner creation triggered via backend`,
+                idempotencyKey: generateIdempotencyKey('BP_CREATE', ref),
             }
         )
     }

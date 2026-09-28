@@ -131,7 +131,7 @@ export function VendorDataProvider({ children }) {
         if (token) {
             const vendorId = localStorage.getItem('vendor_id')
             if (vendorId) {
-                apiClient.get(`/buyer/vendors/${vendorId}`)
+                apiClient.get(`/vendor/get-specific-vendor/${vendorId}?vendor_identifier=${vendorId}`)
                     .then(vRes => {
                         setData(prev => ({
                             ...prev,

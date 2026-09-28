@@ -275,7 +275,7 @@ function CompanyProfile() {
                                     {
                                         key: 'type',
                                         header: 'Address Type',
-                                        render: (row) => <span style={{ fontWeight: 600 }}>{row.type}</span>,
+                                        render: (v) => <span style={{ fontWeight: 600 }}>{v}</span>,
                                     },
                                     { key: 'address', header: 'Physical Address', render: (row) => row.address },
                                     { key: 'purpose', header: 'ERP Function', render: (row) => row.purpose },
@@ -291,7 +291,7 @@ function CompanyProfile() {
                                     {
                                         key: 'name',
                                         header: 'Contact Person',
-                                        render: (row) => <span style={{ fontWeight: 600 }}>{row.name}</span>,
+                                        render: (v) => <span style={{ fontWeight: 600 }}>{v}</span>,
                                     },
                                     { key: 'title', header: 'Designation', render: (row) => row.title },
                                     { key: 'email', header: 'Email Address', render: (row) => row.email },
@@ -383,7 +383,7 @@ function CompanyProfile() {
                                     {
                                         key: 'org',
                                         header: 'Purchasing Org',
-                                        render: (row) => <span style={{ fontWeight: 600 }}>{row.org}</span>,
+                                        render: (v) => <span style={{ fontWeight: 600 }}>{v}</span>,
                                     },
                                     { key: 'curr', header: 'Currency', render: (row) => row.curr },
                                     { key: 'inco', header: 'Incoterms', render: (row) => row.inco },
@@ -419,7 +419,7 @@ function CompanyProfile() {
                                     {
                                         key: 'type',
                                         header: 'Change Type',
-                                        render: (row) => <span style={{ fontWeight: 600 }}>{row.type}</span>,
+                                        render: (v) => <span style={{ fontWeight: 600 }}>{v}</span>,
                                     },
                                     { key: 'when', header: 'Date Submitted', render: (row) => row.when },
                                     {
