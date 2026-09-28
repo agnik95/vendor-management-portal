@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AppLayout from '../../components/layout/AppLayout'
 import PageContainer from '../../components/layout/PageContainer'
@@ -8,33 +8,77 @@ import StatusBadge from '../../components/common/StatusBadge'
 import DataTable from '../../components/common/DataTable'
 import { useVendorData } from '../../context/useVendorData'
 import { useToast } from '../../context/useToast'
+import apiClient from '../../services/apiClient'
 
 function formatMoney(amount) {
-    if (!amount) return '₹0'
-    return `₹${Number(amount).toLocaleString('en-IN')}`
+    if (!amount) return '?0'
+    return `?${Number(amount).toLocaleString('en-IN')}`
 }
 
 function QuoteResponse() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { data, submitQuote } = useVendorData()
+    const { submitQuote } = useVendorData()
     const toast = useToast()
 
-    const rfq = useMemo(() => {
-        const rfqs = data?.rfqs || []
-        return rfqs.find((r) => r?.no === id) || rfqs[0]
-    }, [data?.rfqs, id])
+    const [rfq, setRfq] = useState(null)
+    const [isSubmitted, setIsSubmitted] = useState(false)
+    const [lines, setLines] = useState([])
+    const [loading, setLoading] = useState(true)
 
-    const [isSubmitted, setIsSubmitted] = useState(rfq?.quote === 'SUBMITTED')
+    const parseSapDate = (dateStr) => {
+        if (!dateStr) return 'N/A'
+        const match = dateStr.match(/\/Date\((\d+)(?:[+-]\d+)?\)\//)
+        if (match) {
+            return new Date(parseInt(match[1], 10)).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        }
+        return dateStr
+    }
 
-    const [lines, setLines] = useState(
-        rfq?.lines?.map((l) => ({
-            ...l,
-            price: l.price || '420.00',
-            lead: l.lead || '21 days',
-            moq: l.moq || '500',
-        })) || []
-    )
+    useEffect(() => {
+        const fetchRfqDetails = async () => {
+            setLoading(true)
+            try {
+                const res = await apiClient.get(`/vendor/get-specific-rfq/${id}`)
+                if (res.data?.data) {
+                    const rfqData = res.data.data
+                    const items = rfqData.to_RequestForQuotationItem?.results || []
+                    
+                    const parsedRfq = {
+                        no: rfqData['Purchasing Document'] || rfqData.RequestForQuotation || id,
+                        desc: rfqData['RFQ Description'] || rfqData.RequestForQuotationName || 'Sourcing Event',
+                        org: rfqData['Purchasing Organization'] || rfqData.PurchasingOrganization || '1010',
+                        closes: parseSapDate(rfqData['Quotation Deadline'] || rfqData.QuotationLatestSubmissionDate),
+                        currency: rfqData['Currency'] || rfqData.DocumentCurrency || 'INR',
+                        paymentTerms: rfqData['Payment Terms'] || rfqData.PaymentTerms || 'Standard',
+                        incoterms: rfqData['Incoterms'] || rfqData.IncotermsClassification || 'FCA',
+                        quote: 'NONE' // Could be driven by RFQLifecycleStatus
+                    }
+                    
+                    const parsedLines = items.map((item, idx) => ({
+                        it: item['RFQ Item'] || item.RequestForQuotationItem || (idx + 1).toString(),
+                        mat: item['Material'] || item.Material || 'Unknown',
+                        d: item['Short Text'] || item.RequestForQuotationItemText || 'Description',
+                        qty: Number(item['Requested Quantity'] || item.ScheduleLineOrderQuantity || item.TargetQuantity || 1),
+                        uom: item['Order Unit'] || item.OrderQuantityUnit || 'EA',
+                        price: '0.00',
+                        lead: '',
+                        moq: ''
+                    }))
+                    
+                    setRfq(parsedRfq)
+                    setLines(parsedLines.length > 0 ? parsedLines : [
+                        { it: '10', mat: 'RAW-MTL-01', d: 'Steel Rod EN8D', qty: 5000, uom: 'EA', price: '420.00', lead: '21 days', moq: '500' }
+                    ])
+                }
+            } catch (err) {
+                console.error("Failed to fetch RFQ details", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        if (id) fetchRfqDetails()
+    }, [id])
 
     const handleLineChange = (index, field, value) => {
         setLines((prev) =>
@@ -47,7 +91,6 @@ function QuoteResponse() {
     }, [lines])
 
     const handleSubmitQuote = async () => {
-        // Validation: All lines must have a valid price > 0
         const hasZero = lines.some((l) => !l.price || Number(l.price) <= 0)
         if (hasZero) {
             toast.error(
@@ -58,24 +101,20 @@ function QuoteResponse() {
         }
 
         try {
-            await submitQuote(rfq?.no || '6000004412', lines)
+            await submitQuote(id, lines)
             setIsSubmitted(true)
-            toast.success(
-                `Supplier Quotation Submitted for RFQ ${rfq?.no}`,
-                'Header and line pricing posted in a single atomic transaction.'
-            )
-            navigate('/supplier/rfq')
+            toast.success('Binding Quotation Submitted', `Commercial bid for ${id} has been transmitted to S/4HANA via OData interface.`)
         } catch (err) {
             toast.error('Quotation Submission Failed', err.message)
         }
     }
 
     const tableColumns = [
-        { key: 'it', header: 'Item', width: '60px', render: (row) => row.it },
+        { key: 'it', header: 'Item', width: '60px', render: (_, row) => row.it },
         {
             key: 'mat',
             header: 'Material Specification',
-            render: (row) => (
+            render: (_, row) => (
                 <div>
                     <span className="font-mono font-bold">{row.mat}</span>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{row.d}</div>
@@ -84,16 +123,16 @@ function QuoteResponse() {
         },
         {
             key: 'qty',
-            header: 'Annual Demand',
+            header: 'Requested Qty',
             align: 'right',
-            render: (row) => `${row.qty.toLocaleString('en-IN')} EA`,
+            render: (_, row) => `${row.qty.toLocaleString('en-IN')} ${row.uom || 'EA'}`,
         },
         {
             key: 'price',
             header: 'Unit Price (INR)',
-            render: (row, _, idx) => {
+            render: (_, row, idx) => {
                 if (isSubmitted) {
-                    return <span className="font-mono font-bold">₹{Number(row.price).toFixed(2)}</span>
+                    return <span className="font-mono font-bold">?{Number(row.price).toFixed(2)}</span>
                 }
                 return (
                     <input
@@ -101,7 +140,8 @@ function QuoteResponse() {
                         className="form-control font-mono"
                         value={row.price}
                         onChange={(e) => handleLineChange(idx, 'price', e.target.value)}
-                        style={{ width: '110px', textAlign: 'right', padding: '6px 8px' }}
+                        style={{ width: '100px', padding: '6px 8px', textAlign: 'right' }}
+                        placeholder="0.00"
                     />
                 )
             },
@@ -109,7 +149,7 @@ function QuoteResponse() {
         {
             key: 'lead',
             header: 'Lead Time',
-            render: (row, _, idx) => {
+            render: (_, row, idx) => {
                 if (isSubmitted) return row.lead
                 return (
                     <input
@@ -118,6 +158,7 @@ function QuoteResponse() {
                         value={row.lead}
                         onChange={(e) => handleLineChange(idx, 'lead', e.target.value)}
                         style={{ width: '100px', padding: '6px 8px' }}
+                        placeholder="e.g. 14 days"
                     />
                 )
             },
@@ -125,7 +166,7 @@ function QuoteResponse() {
         {
             key: 'moq',
             header: 'MOQ (Batch)',
-            render: (row, _, idx) => {
+            render: (_, row, idx) => {
                 if (isSubmitted) return `${row.moq} pcs`
                 return (
                     <input
@@ -142,7 +183,7 @@ function QuoteResponse() {
             key: 'val',
             header: 'Annual Value',
             align: 'right',
-            render: (row) => (
+            render: (_, row) => (
                 <span className="font-mono font-bold">
                     {formatMoney((Number(row.price) || 0) * row.qty)}
                 </span>
@@ -150,15 +191,27 @@ function QuoteResponse() {
         },
     ]
 
+    if (loading) {
+        return (
+            <AppLayout activePage="RFQ inbox" portal="Supplier">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+                    <div className="spinner" style={{ width: '40px', height: '40px', border: '4px solid var(--border-color)', borderTop: '4px solid var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                    <div style={{ marginTop: '16px', color: 'var(--text-muted)' }}>Retrieving RFQ specifications from SAP S/4HANA...</div>
+                    <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                </div>
+            </AppLayout>
+        )
+    }
+
     return (
         <AppLayout activePage="RFQ inbox" portal="Supplier">
             <PageContainer
-                kicker={`SOURCING EVENT · ${rfq?.no || 'RFQ 6000004412'}`}
-                title={`Quote Response — ${rfq?.desc || 'Precision Shafts'}`}
+                kicker={`SOURCING EVENT � ${rfq?.no || 'RFQ'}`}
+                title={`Quote Response � ${rfq?.desc || 'Sourcing Event'}`}
                 subtitle="Review technical requirements, input competitive line pricing, and dispatch legally binding commercial quotation."
                 actions={
                     <Button variant="secondary" size="sm" onClick={() => navigate('/supplier/rfq')}>
-                        ← Back to RFQs
+                        ? Back to RFQs
                     </Button>
                 }
             >
@@ -191,7 +244,7 @@ function QuoteResponse() {
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                                     Purchasing Org
                                 </span>
-                                <div style={{ fontWeight: 600 }}>1010 — Domestic</div>
+                                <div style={{ fontWeight: 600 }}>{rfq?.org || '1010'}</div>
                             </div>
                             <div>
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
@@ -201,89 +254,51 @@ function QuoteResponse() {
                             </div>
                             <div>
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                                    Bid Validity
+                                    Currency
                                 </span>
-                                <div style={{ fontWeight: 600 }}>12 months fixed</div>
-                            </div>
-                            <div>
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                                    Incoterms
-                                </span>
-                                <div style={{ fontWeight: 600 }}>FCA Bengaluru</div>
+                                <div style={{ fontWeight: 600 }}>{rfq?.currency}</div>
                             </div>
                             <div>
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                                     Payment Terms
                                 </span>
-                                <div style={{ fontWeight: 600 }}>ZN45 — 45 days net</div>
+                                <div style={{ fontWeight: 600 }}>{rfq?.paymentTerms}</div>
                             </div>
                             <div>
                                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                                    Attachments
+                                    Incoterms
                                 </span>
-                                <div style={{ fontWeight: 600 }}>📎 3 drawings, 1 spec</div>
+                                <div style={{ fontWeight: 600 }}>{rfq?.incoterms}</div>
                             </div>
                         </div>
                     </Card.Body>
                 </Card>
 
-                {/* Line Pricing Table */}
+                {/* Line Items Table */}
                 <Card>
                     <Card.Header
-                        kicker="LINE ITEM COMMERCIAL BIDDING"
-                        title="Your Quotation Prices"
+                        kicker="COMMERCIAL BID"
+                        title="Line Item Pricing"
                         action={
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                    Annual Projected Bid:{' '}
-                                    <strong className="font-mono text-base">{formatMoney(totalValue)}</strong>
-                                </span>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                    Total Quote Value
+                                </div>
+                                <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--color-primary)' }}>
+                                    {formatMoney(totalValue)}
+                                </div>
                             </div>
                         }
                     />
-                    <Card.Body style={{ padding: 0 }}>
-                        <DataTable columns={tableColumns} data={lines} />
-                    </Card.Body>
-                    <Card.Footer>
-                        {!isSubmitted ? (
-                            <>
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => toast.info('Draft saved', 'Bid inputs preserved in temporary state.')}
-                                >
-                                    Save draft
-                                </Button>
-                                <div style={{ flex: 1 }} />
-                                <Button variant="primary" onClick={handleSubmitQuote}>
-                                    Submit quotation to SAP
-                                </Button>
-                            </>
-                        ) : (
-                            <span className="font-mono text-xs text-muted">
-                                Registered as SAP Supplier Quotation <strong>7000004412</strong>. Prices are authoritative and
-                                locked.
-                            </span>
-                        )}
-                    </Card.Footer>
+                    <DataTable columns={tableColumns} data={lines} keyField="it" pageSize={0} />
+                    {!isSubmitted && (
+                        <Card.Footer style={{ justifyContent: 'flex-end', background: 'var(--bg-card-subtle)' }}>
+                            <Button variant="primary" onClick={handleSubmitQuote}>
+                                Submit Firm Quotation
+                            </Button>
+                        </Card.Footer>
+                    )}
                 </Card>
-
-                {/* All or Nothing Rule Callout */}
-                <div
-                    style={{
-                        marginTop: '20px',
-                        padding: '14px 18px',
-                        background: 'rgba(59, 130, 246, 0.05)',
-                        border: '1px solid rgba(59, 130, 246, 0.2)',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        lineHeight: 1.6,
-                        color: 'var(--text-secondary)',
-                    }}
-                >
-                    <strong>All-or-Nothing Commercial Rule:</strong> Partial item submissions are strictly disallowed. Every
-                    line must be priced with its specific lead time and minimum order quantity, or the entire RFQ must be
-                    declined. When submitted, the header and items post in a single atomic transaction into SAP S/4HANA.
-                </div>
             </PageContainer>
         </AppLayout>
     )
